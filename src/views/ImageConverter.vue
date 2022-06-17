@@ -22,12 +22,19 @@
       <h1 class="C87">성공했다우!</h1>
     </div>
 
-    <div v-else class="FR AC JC">
-      <div class="FC AC JC drag pointer" id="drag-folder">
-        <h2 class="C87">Folder</h2>
+    <div v-else class="FC AC JC">
+      <div class="FR AC JC">
+        <div class="FC AC JC drag pointer" id="drag-folder">
+          <h2 class="C87">Folder</h2>
+        </div>
+        <div class="FC AC JC drag pointer" id="drag-file">
+          <h2 class="C87">File</h2>
+        </div>
       </div>
-      <div class="FC AC JC drag pointer" id="drag-file">
-        <h2 class="C87">File</h2>
+      <div class="FR AC width100" style="margin-top: 20px; margin-left: 20px">
+        <h3 style="margin-right: 20px" class="C87">어느 크기로 조절??</h3>
+        <input type="range" min="30" max="1000" step="5" v-model="size" />
+        <h3 class="C87">{{ size }} X {{ size }}</h3>
       </div>
     </div>
   </div>
@@ -40,6 +47,7 @@ export default class ImageConverter extends Vue {
   loading = false;
   showResult = false;
   result = true;
+  size = 60;
 
   dragFolderElement: any = null;
   dragFileElement: any = null;
@@ -60,16 +68,17 @@ export default class ImageConverter extends Vue {
       e.preventDefault();
       this.loading = true;
       const rootFilePath = e.dataTransfer.files[0]?.path;
-      this.result = await ipcRenderer.invoke(
-        "convertFolderImage",
-        rootFilePath
-      );
+      this.result = await ipcRenderer.invoke("convertFolderImage", {
+        path: rootFilePath,
+        size: this.size,
+      });
       this.showResult = true;
       this.loading = false;
       setTimeout(() => {
         this.showResult = false;
         setTimeout(() => {
           this.folderHandler();
+          this.fileHandler();
         }, 0);
       }, 5000);
       return;
@@ -92,12 +101,16 @@ export default class ImageConverter extends Vue {
       e.preventDefault();
       this.loading = true;
       const rootFilePath = e.dataTransfer.files[0]?.path;
-      this.result = await ipcRenderer.invoke("convertImage", rootFilePath);
+      this.result = await ipcRenderer.invoke("convertImage", {
+        path: rootFilePath,
+        size: this.size,
+      });
       this.showResult = true;
       this.loading = false;
       setTimeout(() => {
         this.showResult = false;
         setTimeout(() => {
+          this.folderHandler();
           this.fileHandler();
         }, 0);
       }, 5000);
@@ -117,6 +130,33 @@ export default class ImageConverter extends Vue {
 .home {
   background: #c83001;
 }
+input[type="range"] {
+  -webkit-appearance: none;
+  margin-right: 15px;
+  width: 200px;
+  height: 7px;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 5px;
+  cursor: pointer;
+  background-size: 70% 100%;
+  background-repeat: no-repeat;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  height: 20px;
+  width: 20px;
+  border-radius: 50%;
+  background: #ff4500;
+  cursor: pointer;
+  box-shadow: 0 0 2px 0 #555;
+  transition: background 0.3s ease-in-out;
+}
+/* input[type="range"]::-webkit-slider-runnable-track {
+  -webkit-appearance: none;
+  box-shadow: none;
+  border: none;
+  background: transparent;
+} */
 .img-box {
   height: 240px;
 }

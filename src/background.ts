@@ -55,18 +55,20 @@ async function createWindow() {
   }
 
   ipcMain.handle("convertFolderImage", async (event, arg) => {
-    let rootPath: string = arg;
+    let rootPath: string = arg.path;
+    const size = Number(arg.size);
     rootPath = rootPath.replaceAll("\\", "/");
+    if (!fs.lstatSync(rootPath).isDirectory()) return false;
+
     const dirFileList = await searchDirectory(rootPath);
     const promiseList: Array<any> = [];
-    console.log(rootPath);
 
     for (const filePath of dirFileList) {
       let webpFilePath = filePath;
       if (filePath.includes(".webp") || !checkImage(filePath)) continue;
       webpFilePath = deleteImageProperty(webpFilePath);
       const converting = sharp(filePath)
-        .resize(60, 60)
+        .resize(size, size)
         .toFile(`${webpFilePath}.webp`);
       promiseList.push(converting);
       const promiseResultList = await Promise.allSettled(promiseList);
@@ -74,23 +76,22 @@ async function createWindow() {
         (promiseResult: any) => promiseResult.status == "rejected"
       );
 
-      console.log(filePath);
-      console.log(erroredPromise);
       if (erroredPromise.length != 0) return false;
-      console.log(filePath);
     }
 
     return true;
   });
 
   ipcMain.handle("convertImage", async (event, arg) => {
-    let rootPath: string = arg;
+    let rootPath: string = arg.path;
+    const size = Number(arg.size);
+
     rootPath = rootPath.replaceAll("\\", "/");
     let webpFilePath = rootPath;
     if (rootPath.includes(".webp") || !checkImage(rootPath)) return false;
     webpFilePath = webpFilePath = deleteImageProperty(webpFilePath);
     const convertResult = await sharp(rootPath)
-      .resize(60, 60)
+      .resize(size, size)
       .toFile(`${webpFilePath}.webp`)
       .catch((err) => {
         console.log(err);
@@ -100,7 +101,6 @@ async function createWindow() {
   });
 
   if (process.env.WEBPACK_DEV_SERVER_URL) {
-    console.log(process.env.WEBPACK_DEV_SERVER_URL);
     await win.loadURL(process.env.WEBPACK_DEV_SERVER_URL as string);
     if (!process.env.IS_TEST) win.webContents.openDevTools();
   } else {
