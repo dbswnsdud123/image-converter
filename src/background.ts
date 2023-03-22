@@ -42,7 +42,8 @@ async function createWindow() {
   function checkImage(path: string) {
     return path.includes(".png") ||
       path.includes(".jpg") ||
-      path.includes(".jpeg")
+      path.includes(".jpeg") ||
+      path.includes(".webp")
       ? true
       : false;
   }
@@ -51,12 +52,14 @@ async function createWindow() {
     deletedImagePropertyPath = deletedImagePropertyPath.replace(".png", "");
     deletedImagePropertyPath = deletedImagePropertyPath.replace(".jpg", "");
     deletedImagePropertyPath = deletedImagePropertyPath.replace(".jpeg", "");
+    deletedImagePropertyPath = deletedImagePropertyPath.replace(".webp", "");
     return deletedImagePropertyPath;
   }
 
   ipcMain.handle("convertFolderImage", async (event, arg) => {
     let rootPath: string = arg.path;
-    const size = Number(arg.size);
+    const width = Number(arg.width);
+    const height = Number(arg.height);
     rootPath = rootPath.replaceAll("\\", "/");
     if (!fs.lstatSync(rootPath).isDirectory()) return false;
 
@@ -65,11 +68,17 @@ async function createWindow() {
 
     for (const filePath of dirFileList) {
       let webpFilePath = filePath;
-      if (filePath.includes(".webp") || !checkImage(filePath)) continue;
+      if (!checkImage(filePath)) continue;
       webpFilePath = deleteImageProperty(webpFilePath);
       const converting = sharp(filePath)
-        .resize(size, size)
-        .toFile(`${webpFilePath}.webp`);
+        .resize(width, height)
+        .toFile(
+          `${
+            filePath.includes(".webp")
+              ? `${webpFilePath}_converted`
+              : webpFilePath
+          }.webp`
+        );
       promiseList.push(converting);
       const promiseResultList = await Promise.allSettled(promiseList);
       const erroredPromise = promiseResultList.filter(
@@ -84,15 +93,22 @@ async function createWindow() {
 
   ipcMain.handle("convertImage", async (event, arg) => {
     let rootPath: string = arg.path;
-    const size = Number(arg.size);
+    const width = Number(arg.width);
+    const height = Number(arg.height);
 
     rootPath = rootPath.replaceAll("\\", "/");
     let webpFilePath = rootPath;
-    if (rootPath.includes(".webp") || !checkImage(rootPath)) return false;
+    if (!checkImage(rootPath)) return false;
     webpFilePath = webpFilePath = deleteImageProperty(webpFilePath);
     const convertResult = await sharp(rootPath)
-      .resize(size, size)
-      .toFile(`${webpFilePath}.webp`)
+      .resize(width, height)
+      .toFile(
+        `${
+          rootPath.includes(".webp")
+            ? `${webpFilePath}_converted`
+            : webpFilePath
+        }.webp`
+      )
       .catch((err) => {
         console.log(err);
       });

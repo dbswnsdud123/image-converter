@@ -5,7 +5,7 @@
       class="C87 abs FC JC AC"
       style="margin-bottom: 40px; top: 30px"
     >
-      <h1 style="margin-bottom: 20px">png, jpg, jpeg를 webp로!</h1>
+      <h1 style="margin-bottom: 20px">png, jpg, jpeg, webp를 webp로!</h1>
       <h1>폴더 또는 파일에다가 드래그 드랍!</h1>
     </div>
     <div v-if="loading" class="FC JC AC img-box">
@@ -31,10 +31,33 @@
           <h2 class="C87">File</h2>
         </div>
       </div>
-      <div class="FR AC width100" style="margin-top: 20px; margin-left: 20px">
-        <h3 style="margin-right: 20px" class="C87">어느 크기로 조절??</h3>
-        <input type="range" min="30" max="1000" step="5" v-model="size" />
-        <h3 class="C87">{{ size }} X {{ size }}</h3>
+      <div class="FC width100">
+        <div class="FR AC width100" style="margin-left: 20px">
+          <h3 style="margin-right: 20px" class="C87">
+            Width 조절 : {{ width }}
+          </h3>
+          <input
+            type="range"
+            min="10"
+            max="1000"
+            step="5"
+            class="flex1"
+            v-model="width"
+          />
+        </div>
+        <div class="FR AC width100" style="margin-left: 20px">
+          <h3 style="margin-right: 20px" class="C87">
+            Height 조절 : {{ height }}
+          </h3>
+          <input
+            type="range"
+            min="10"
+            max="1000"
+            step="5"
+            class="flex1"
+            v-model="height"
+          />
+        </div>
       </div>
     </div>
   </div>
@@ -47,7 +70,8 @@ export default class ImageConverter extends Vue {
   loading = false;
   showResult = false;
   result = true;
-  size = 60;
+  width = 60;
+  height = 60;
 
   dragFolderElement: any = null;
   dragFileElement: any = null;
@@ -70,7 +94,8 @@ export default class ImageConverter extends Vue {
       const rootFilePath = e.dataTransfer.files[0]?.path;
       this.result = await ipcRenderer.invoke("convertFolderImage", {
         path: rootFilePath,
-        size: this.size,
+        width: this.width,
+        height: this.height,
       });
       this.showResult = true;
       this.loading = false;
@@ -103,7 +128,8 @@ export default class ImageConverter extends Vue {
       const rootFilePath = e.dataTransfer.files[0]?.path;
       this.result = await ipcRenderer.invoke("convertImage", {
         path: rootFilePath,
-        size: this.size,
+        width: this.width,
+        height: this.height,
       });
       this.showResult = true;
       this.loading = false;
